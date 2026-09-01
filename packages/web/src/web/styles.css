@@ -1,0 +1,160 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: 2px;
+  --radius-md: 2px;
+  --radius-lg: 3px;
+  --radius-xl: 4px;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-sans: "Source Sans 3", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Archivo", ui-sans-serif, system-ui, sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-warning: var(--warning);
+  --color-signal: var(--signal);
+  --color-navy: var(--navy);
+  --color-navy-deep: var(--navy-deep);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}
+
+:root {
+  --radius: 2px;
+  --background: #eceef1;
+  --foreground: #1b2733;
+  --card: #ffffff;
+  --card-foreground: #1b2733;
+  --popover: #ffffff;
+  --popover-foreground: #1b2733;
+  --primary: #1a5fa4;
+  --primary-foreground: #ffffff;
+  --secondary: #f4f6f8;
+  --secondary-foreground: #1b2733;
+  --muted: #f4f6f8;
+  --muted-foreground: #6e7a88;
+  --accent: #e7eef6;
+  --accent-foreground: #123c6e;
+  --destructive: #c62828;
+  --warning: #b26a00;
+  --signal: #1e8e3e;
+  --navy: #123c6e;
+  --navy-deep: #0c2c52;
+  --border: #d5dbe2;
+  --input: #d5dbe2;
+  --ring: #1a5fa4;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    background: var(--background);
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "tnum" 1;
+    overscroll-behavior-y: none;
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+}
+
+/* Rótulo de campo do padrão corporativo: caixa alta, cinza, discreto */
+@utility label {
+  @apply text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground;
+}
+
+/* Cartão branco com borda fina e sombra sutil, cantos praticamente retos */
+@utility painel {
+  @apply border border-border bg-card shadow-[0_1px_2px_rgba(18,60,110,0.06)];
+}
+
+/* Cabeçalho azul do cartão, igual aos widgets do portal */
+@utility painel-titulo {
+  @apply flex items-center gap-2 px-4 py-3 text-[15px] font-semibold text-primary;
+}
+
+@utility numero-grande {
+  font-family: var(--font-display);
+  @apply font-bold leading-none text-navy;
+}
+
+@keyframes flash-ok {
+  0% {
+    background-color: rgba(30, 142, 62, 0.16);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+@keyframes flash-bad {
+  0% {
+    background-color: rgba(198, 40, 40, 0.14);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0.2;
+  }
+}
+
+.flash-ok {
+  animation: flash-ok 0.5s ease-out;
+}
+.flash-bad {
+  animation: flash-bad 0.5s ease-out;
+}
+.rise {
+  animation: rise 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.blink {
+  animation: blink 1.1s steps(1) infinite;
+}
+
+/* Esconde spinners de input number nos coletores */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
