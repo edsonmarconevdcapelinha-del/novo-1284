@@ -61,7 +61,13 @@ export default function BiparPage() {
   const ok = resultado?.status === "ok";
 
   return (
-    <div className="min-h-dvh bg-background" onClick={focar}>
+    // Qualquer toque na tela devolve o foco ao campo do coletor.
+    <div
+      className="min-h-dvh bg-background"
+      role="presentation"
+      onClick={focar}
+      onKeyDown={focar}
+    >
       <StatusBar />
 
       <main className="mx-auto max-w-[1400px] px-3 pb-24 pt-3 lg:grid lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-4">

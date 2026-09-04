@@ -1,9 +1,10 @@
 import { z } from "zod";
-import { asc, eq, inArray, like, or, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, like, or, sql } from "drizzle-orm";
 import { base } from "../__core/app";
 import { db } from "../database";
 import * as schema from "../database/schema";
 import { candidatosDeCodigo, eanToSku } from "../lib/sku";
+import { zLoja } from "../lib/lojas";
 
 export type Posicao = {
   endereco: string;
@@ -24,7 +25,7 @@ export type Resultado = {
   status: "ok" | "sem_endereco" | "nao_existe" | "invalido";
 };
 
-async function consultarCodigo(entrada: string): Promise<Resultado> {
+async function consultarCodigo(entrada: string, loja: string): Promise<Resultado> {
   const candidatos = candidatosDeCodigo(entrada);
   if (candidatos.length === 0) {
     return { entrada, sku: null, descricao: null, posicoes: [], status: "invalido" };
@@ -38,7 +39,7 @@ async function consultarCodigo(entrada: string): Promise<Resultado> {
   const posicoesEncontradas = await db
     .select()
     .from(schema.enderecos)
-    .where(inArray(schema.enderecos.codigoMaterial, candidatos))
+    .where(and(eq(schema.enderecos.loja, loja), inArray(schema.enderecos.codigoMaterial, candidatos)))
     .orderBy(asc(schema.enderecos.nomeEstacao), asc(schema.enderecos.linha), asc(schema.enderecos.coluna));
 
   // Prioridade: o candidato que tem endereço; depois o que tem cadastro; depois a fórmula.
@@ -68,18 +69,18 @@ async function consultarCodigo(entrada: string): Promise<Resultado> {
 export const consulta = {
   /** Bipagem: EAN ou código do material -> endereço na linha de separação. */
   bipar: base
-    .input(z.object({ codigo: z.string().min(1).max(40) }))
-    .handler(({ input }) => consultarCodigo(input.codigo)),
+    .input(z.object({ codigo: z.string().min(1).max(40), loja: zLoja }))
+    .handler(({ input }) => consultarCodigo(input.codigo, input.loja)),
 
   /** Busca manual do PC: por código, EAN ou parte da descrição. */
   buscar: base
-    .input(z.object({ termo: z.string().min(2).max(80) }))
+    .input(z.object({ termo: z.string().min(2).max(80), loja: zLoja }))
     .handler(async ({ input }) => {
       const termo = input.termo.trim();
       const soDigitos = termo.replace(/\D/g, "");
 
       if (soDigitos.length >= 4 && soDigitos.length === termo.replace(/\s/g, "").length) {
-        const r = await consultarCodigo(termo);
+        const r = await consultarCodigo(termo, input.loja);
         return r.status === "nao_existe" ? { itens: [] as ItemBusca[] } : { itens: [paraItem(r)] };
       }
 
@@ -95,7 +96,7 @@ export const consulta = {
       const posicoes = await db
         .select()
         .from(schema.enderecos)
-        .where(inArray(schema.enderecos.codigoMaterial, codigos));
+        .where(and(eq(schema.enderecos.loja, input.loja), inArray(schema.enderecos.codigoMaterial, codigos)));
 
       const itens: ItemBusca[] = materiaisEncontrados.map((m) => ({
         sku: m.codigo,
@@ -107,12 +108,12 @@ export const consulta = {
 
   /** Lista as posições de uma estação (conferência de rua). */
   porEstacao: base
-    .input(z.object({ estacao: z.string().min(1) }))
+    .input(z.object({ estacao: z.string().min(1), loja: zLoja }))
     .handler(async ({ input }) => {
       const rows = await db
         .select()
         .from(schema.enderecos)
-        .where(eq(schema.enderecos.nomeEstacao, input.estacao))
+        .where(and(eq(schema.enderecos.loja, input.loja), eq(schema.enderecos.nomeEstacao, input.estacao)))
         .orderBy(asc(schema.enderecos.linha), asc(schema.enderecos.coluna))
         .limit(500);
       const codigos = [...new Set(rows.map((r) => r.codigoMaterial))];
@@ -129,10 +130,11 @@ export const consulta = {
       };
     }),
 
-  estacoes: base.handler(async () => {
+  estacoes: base.input(z.object({ loja: zLoja })).handler(async ({ input }) => {
     const rows = await db
       .selectDistinct({ estacao: schema.enderecos.nomeEstacao })
       .from(schema.enderecos)
+      .where(eq(schema.enderecos.loja, input.loja))
       .orderBy(asc(schema.enderecos.nomeEstacao));
     return rows.map((r) => r.estacao);
   }),

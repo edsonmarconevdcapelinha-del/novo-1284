@@ -13,9 +13,11 @@ import { StatusBar } from "../components/status-bar";
 import { cn } from "../lib/utils";
 import { useStatusBase, useSubirEnderecos, useSubirMateriais } from "../queries/base";
 import { useBuscar } from "../queries/consulta";
+import { useLoja } from "../components/loja-provider";
 
 export default function AbastecerPage() {
   const status = useStatusBase();
+  const { loja, nome } = useLoja();
 
   return (
     <div className="min-h-dvh bg-background">
@@ -28,8 +30,14 @@ export default function AbastecerPage() {
           </h1>
           <p className="mt-1.5 max-w-3xl text-sm leading-relaxed text-muted-foreground">
             Suba a planilha da linha de separação sempre que ela for atualizada. Cada envio{" "}
-            <strong className="font-semibold text-foreground">substitui toda a base anterior</strong>,
-            então o celular passa a consultar a versão nova na hora.
+            <strong className="font-semibold text-foreground">
+              substitui toda a base da loja {loja} · {nome}
+            </strong>{" "}
+            — a outra loja não é afetada. O celular passa a consultar a versão nova na hora.
+          </p>
+          <p className="mt-2 border-l-4 border-primary bg-accent px-3 py-2 text-[13px] leading-relaxed text-foreground">
+            Você está abastecendo <strong className="font-semibold">{loja} · {nome}</strong>. Para
+            subir a planilha da outra loja, troque de loja no cabeçalho antes de enviar o arquivo.
           </p>
         </header>
 
@@ -201,6 +209,7 @@ function CartaoUpload({
         >
           <input
             ref={inputRef}
+            aria-label="Selecionar planilha"
             type="file"
             accept=".xlsx,.xlsm,.xls,.csv"
             className="hidden"
@@ -266,6 +275,7 @@ function BuscaManual() {
 
       <div className="px-4 py-4">
         <input
+          aria-label="Conferência manual"
           value={termo}
           onChange={(e) => setTermo(e.target.value)}
           placeholder="EAN, código do material ou parte da descrição"

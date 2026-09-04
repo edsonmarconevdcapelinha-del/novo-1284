@@ -5,6 +5,8 @@ export const enderecos = sqliteTable(
   "enderecos",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
+    /** Código da loja: cada loja tem a própria linha de separação. */
+    loja: text("loja").notNull().default("13629"),
     nomeEstacao: text("nome_estacao").notNull(),
     nrRack: text("nr_rack"),
     areaLinha: text("area_linha"),
@@ -19,7 +21,11 @@ export const enderecos = sqliteTable(
      */
     codigosCelula: text("codigos_celula"),
   },
-  (t) => [index("idx_enderecos_codigo").on(t.codigoMaterial)],
+  (t) => [
+    index("idx_enderecos_codigo").on(t.codigoMaterial),
+    index("idx_enderecos_loja_codigo").on(t.loja, t.codigoMaterial),
+    index("idx_enderecos_loja_estacao").on(t.loja, t.nomeEstacao),
+  ],
 );
 
 /** Cadastro de materiais (aba "BD2"): código -> nome. */
@@ -31,6 +37,8 @@ export const materiais = sqliteTable("materiais", {
 /** Auditoria de cada abastecimento feito pelo PC. */
 export const uploads = sqliteTable("uploads", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  /** Loja de onde partiu o abastecimento. */
+  loja: text("loja").notNull().default("13629"),
   tipo: text("tipo").notNull(),
   arquivo: text("arquivo").notNull(),
   registros: integer("registros").notNull(),

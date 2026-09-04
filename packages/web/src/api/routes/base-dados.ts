@@ -1,28 +1,33 @@
 import { z } from "zod";
-import { desc, sql } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import { ORPCError } from "@orpc/server";
 import { base as procedure } from "../__core/app";
 import { db } from "../database";
 import * as schema from "../database/schema";
 import { extrair, lerWorkbook, paraCodigo, paraCodigos, paraTexto } from "../lib/planilha";
 import { montarEndereco } from "../lib/sku";
+import { zLoja } from "../lib/lojas";
 
 const LOTE = 400;
 
 export const baseDados = {
   /** Status da base para o cabeçalho e o painel do PC. */
-  status: procedure.handler(async () => {
-    const [pos] = await db.select({ n: sql<number>`count(*)` }).from(schema.enderecos);
+  status: procedure.input(z.object({ loja: zLoja })).handler(async ({ input }) => {
+    const daLoja = eq(schema.enderecos.loja, input.loja);
+    const [pos] = await db.select({ n: sql<number>`count(*)` }).from(schema.enderecos).where(daLoja);
     const [comMaterial] = await db
       .select({ n: sql<number>`count(distinct ${schema.enderecos.codigoMaterial})` })
-      .from(schema.enderecos);
+      .from(schema.enderecos)
+      .where(daLoja);
     const [mats] = await db.select({ n: sql<number>`count(*)` }).from(schema.materiais);
     const [estacoes] = await db
       .select({ n: sql<number>`count(distinct ${schema.enderecos.nomeEstacao})` })
-      .from(schema.enderecos);
+      .from(schema.enderecos)
+      .where(daLoja);
     const historico = await db
       .select()
       .from(schema.uploads)
+      .where(eq(schema.uploads.loja, input.loja))
       .orderBy(desc(schema.uploads.criadoEm))
       .limit(8);
 
@@ -38,7 +43,13 @@ export const baseDados = {
 
   /** Sobe a planilha da linha de separação — substitui tudo. */
   subirEnderecos: procedure
-    .input(z.object({ arquivo: z.string().min(1), nome: z.string().default("planilha.xlsx") }))
+    .input(
+      z.object({
+        arquivo: z.string().min(1),
+        nome: z.string().default("planilha.xlsx"),
+        loja: zLoja,
+      }),
+    )
     .handler(async ({ input }) => {
       let linhas;
       try {
@@ -74,6 +85,7 @@ export const baseDados = {
         const endereco = montarEndereco(estacao, linha, coluna);
         for (const codigo of codigos) {
           registros.push({
+            loja: input.loja,
             nomeEstacao: estacao,
             nrRack: paraTexto(l["nr rack"]) || null,
             areaLinha: paraTexto(l["area linha separacao"] ?? l["area linha separaçao"]) || null,
@@ -92,20 +104,36 @@ export const baseDados = {
         });
       }
 
-      await db.delete(schema.enderecos);
+      // Substitui só a linha de separação desta loja — a outra loja fica intacta.
+      await db.delete(schema.enderecos).where(eq(schema.enderecos.loja, input.loja));
       for (let i = 0; i < registros.length; i += LOTE) {
         await db.insert(schema.enderecos).values(registros.slice(i, i + LOTE));
       }
       await db
         .insert(schema.uploads)
-        .values({ tipo: "enderecos", arquivo: input.nome, registros: registros.length });
+        .values({
+          loja: input.loja,
+          tipo: "enderecos",
+          arquivo: input.nome,
+          registros: registros.length,
+        });
 
       return { inseridos: registros.length, ignoradas, posicoesCompartilhadas };
     }),
 
-  /** Sobe o cadastro de materiais (código -> nome) — substitui tudo. */
+  /**
+   * Sobe o cadastro de materiais (código -> nome) — substitui tudo.
+   * O cadastro é compartilhado entre as lojas (mesmos produtos); só a linha
+   * de separação é separada por loja.
+   */
   subirMateriais: procedure
-    .input(z.object({ arquivo: z.string().min(1), nome: z.string().default("planilha.xlsx") }))
+    .input(
+      z.object({
+        arquivo: z.string().min(1),
+        nome: z.string().default("planilha.xlsx"),
+        loja: zLoja,
+      }),
+    )
     .handler(async ({ input }) => {
       let linhas;
       try {
@@ -142,7 +170,12 @@ export const baseDados = {
       }
       await db
         .insert(schema.uploads)
-        .values({ tipo: "materiais", arquivo: input.nome, registros: registros.length });
+        .values({
+          loja: input.loja,
+          tipo: "materiais",
+          arquivo: input.nome,
+          registros: registros.length,
+        });
 
       return { inseridos: registros.length, ignoradas };
     }),

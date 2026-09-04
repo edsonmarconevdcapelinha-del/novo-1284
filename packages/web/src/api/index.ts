@@ -2,7 +2,7 @@ import type { RouterClient } from "@orpc/server";
 import { createApp } from "./__core/app";
 import { ping } from "./routes/ping";
 import { consulta } from "./routes/consulta";
-import { baseDados } from "./routes/base";
+import { baseDados } from "./routes/base-dados";
 
 // API features are oRPC procedures, one file per feature in ./routes/,
 // composed into this router — typed end-to-end via the clients
