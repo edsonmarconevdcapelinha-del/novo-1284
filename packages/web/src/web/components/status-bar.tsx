@@ -20,13 +20,13 @@ export function StatusBar() {
     : null;
 
   return (
-    <header className="sticky top-0 z-30 bg-navy text-white shadow-[0_1px_3px_rgba(0,0,0,0.2)]">
-      <div className="mx-auto flex max-w-[1400px] items-stretch">
+    <header className="sticky top-0 z-30 w-full overflow-hidden bg-navy text-white shadow-[0_1px_3px_rgba(0,0,0,0.2)]">
+      <div className="mx-auto flex w-full min-w-0 max-w-[1400px] items-stretch">
         {/* Bloco da marca, no lugar do "vd+" do portal */}
-        <div className="flex items-center gap-2.5 bg-navy-deep px-3 py-2 sm:px-4">
+        <div className="flex shrink-0 items-center gap-2 bg-navy-deep px-2 py-2 sm:gap-2.5 sm:px-4">
           <Logo className="h-7 w-auto text-white sm:h-8" />
           <div className="flex flex-col justify-center">
-            <span className="font-display text-[15px] font-extrabold uppercase leading-none tracking-tight text-white sm:text-base">
+            <span className="font-display text-[14px] font-extrabold uppercase leading-none tracking-tight text-white sm:text-base">
               Reposição <span className="text-sky-300">CP</span>
             </span>
             <span className="mt-0.5 text-[8px] font-semibold uppercase leading-none tracking-[0.14em] text-white/55">
@@ -35,7 +35,8 @@ export function StatusBar() {
           </div>
         </div>
 
-        <nav className="flex items-stretch">
+        {/* No celular as abas ficam só com o ícone, para tudo caber numa linha */}
+        <nav className="flex min-w-0 items-stretch">
           <Aba to="/" ativo={rota === "/"} icone={<ScanBarcode className="size-5" />}>
             Bipar
           </Aba>
@@ -48,23 +49,23 @@ export function StatusBar() {
           </Aba>
         </nav>
 
-        <div className="ml-auto flex items-center gap-2 pr-2 text-right sm:gap-4 sm:pr-4">
+        <div className="ml-auto flex min-w-0 items-center gap-1.5 pr-1.5 text-right sm:gap-4 sm:pr-4">
           {/* Loja atual — o repositor precisa ver de cara em qual base está bipando */}
           <button
             type="button"
             onClick={trocar}
             title="Trocar de loja"
-            className="flex items-center gap-2 border border-white/20 bg-white/10 px-2.5 py-1.5 text-left transition-colors hover:bg-white/20"
+            className="flex min-w-0 items-center gap-1 border border-white/20 bg-white/10 px-1.5 py-1.5 text-left transition-colors hover:bg-white/20 sm:gap-2 sm:px-2.5"
           >
-            <span className="leading-tight">
+            <span className="min-w-0 leading-tight">
               <span className="block font-mono text-[10px] font-semibold tracking-wide text-white/60">
                 {loja}
               </span>
-              <span className="block text-[13px] font-semibold uppercase leading-none text-white">
+              <span className="block truncate text-[12px] font-semibold uppercase leading-none text-white sm:text-[13px]">
                 {nome}
               </span>
             </span>
-            <Repeat2 className="size-4 text-white/70" />
+            <Repeat2 className="size-4 shrink-0 text-white/70" />
           </button>
 
           <div className="hidden leading-tight sm:block">
@@ -81,7 +82,7 @@ export function StatusBar() {
           </div>
           <span
             className={cn(
-              "size-2 rounded-full",
+              "size-2 shrink-0 rounded-full",
               status.isLoading
                 ? "bg-white/50 blink"
                 : status.isError
@@ -109,13 +110,15 @@ function Aba({
   return (
     <Link
       to={to}
+      title={typeof children === "string" ? children : undefined}
       className={cn(
-        "flex min-w-[84px] flex-col items-center justify-center gap-1 px-4 py-1.5 text-[12px] font-semibold transition-colors",
+        "flex min-w-0 shrink-0 flex-col items-center justify-center gap-1 px-2.5 py-1.5 text-[12px] font-semibold transition-colors sm:min-w-[84px] sm:px-4",
         ativo ? "bg-white/15 text-white" : "text-white/75 hover:bg-white/10 hover:text-white",
       )}
     >
       {icone}
-      {children}
+      {/* O nome da aba só aparece no PC; no celular o ícone basta */}
+      <span className="hidden sm:block">{children}</span>
     </Link>
   );
 }

@@ -93,7 +93,7 @@ export default function BiparPage() {
                 ref={inputRef}
                 value={codigo}
                 onChange={(e) => setCodigo(e.target.value)}
-                inputMode="numeric"
+                inputMode="none"
                 autoComplete="off"
                 autoCorrect="off"
                 autoCapitalize="off"
@@ -118,7 +118,7 @@ export default function BiparPage() {
               )}
             </div>
             <p className="border-t border-border bg-secondary px-4 py-1.5 text-[11px] text-muted-foreground">
-              Coletor ou digitação · Enter consulta
+              Coletor bipa direto · sem coletor, use o teclado abaixo
             </p>
           </form>
 
